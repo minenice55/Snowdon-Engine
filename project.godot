@@ -1,0 +1,106 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "Node",
+"class": "BattleMonster",
+"language": "GDScript",
+"path": "res://code/sceneMonBattle/battleMonster.gd"
+}, {
+"base": "Node",
+"class": "BattleMove",
+"language": "GDScript",
+"path": "res://code/sceneMonBattle/battleMove.gd"
+}, {
+"base": "Reference",
+"class": "GridmapCollisionHelper",
+"language": "GDScript",
+"path": "res://code/sceneOverworld/gridmapCollisionDef.gd"
+}, {
+"base": "Node",
+"class": "MonType",
+"language": "GDScript",
+"path": "res://code/sceneMonBattle/typeEffectiveness.gd"
+}, {
+"base": "KinematicBody",
+"class": "OverworldObject2D",
+"language": "GDScript",
+"path": "res://code/sceneOverworld/OverworldObject2D.gd"
+}, {
+"base": "Node",
+"class": "SoundManagerModule",
+"language": "GDScript",
+"path": "res://addons/sound_manager/module/internal_scripts/SoundManager_config.gd"
+} ]
+_global_script_class_icons={
+"BattleMonster": "",
+"BattleMove": "",
+"GridmapCollisionHelper": "",
+"MonType": "",
+"OverworldObject2D": "",
+"SoundManagerModule": ""
+}
+
+[application]
+
+config/name="ProjectSnowdon"
+config/icon="res://icon.png"
+
+[autoload]
+
+SoundManager="*res://addons/sound_manager/module/SoundManager.tscn"
+
+[editor_plugins]
+
+enabled=PoolStringArray( "Todo_Manager", "sound_manager" )
+
+[input]
+
+overworld_up={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":87,"unicode":0,"echo":false,"script":null)
+ ]
+}
+overworld_right={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":68,"unicode":0,"echo":false,"script":null)
+ ]
+}
+overworld_down={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":83,"unicode":0,"echo":false,"script":null)
+ ]
+}
+overworld_left={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":65,"unicode":0,"echo":false,"script":null)
+ ]
+}
+overworld_run={
+"deadzone": 0.5,
+"events": [ Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":2,"pressed":false,"doubleclick":false,"script":null)
+ ]
+}
+funny_debug_key={
+"deadzone": 0.5,
+"events": [ Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":1,"pressed":false,"doubleclick":false,"script":null)
+ ]
+}
+
+[physics]
+
+common/physics_fps=120
+common/physics_jitter_fix=0.75
+3d/active_soft_world=false
+
+[rendering]
+
+environment/default_clear_color=Color( 0, 0, 0, 1 )
+environment/default_environment="res://default_env.tres"

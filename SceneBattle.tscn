@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=2]
+
+[sub_resource type="SpatialMaterial" id=1]
+flags_unshaded = true
+vertex_color_use_as_albedo = true
+albedo_color = Color( 0.423529, 0.423529, 0.423529, 1 )
+
+[sub_resource type="CylinderMesh" id=2]
+material = SubResource( 1 )
+top_radius = 2.0
+bottom_radius = 2.0
+height = 0.001
+
+[node name="SceneBattle" type="Spatial"]
+
+[node name="Camera" type="Camera" parent="."]
+transform = Transform( 1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 1, 5 )
+current = true
+
+[node name="battlePodium" type="Spatial" parent="."]
+
+[node name="MeshInstance" type="MeshInstance" parent="battlePodium"]
+mesh = SubResource( 2 )
+material/0 = null
