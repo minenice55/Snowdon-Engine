@@ -57,6 +57,13 @@ config/icon="res://icon.png"
 
 SoundManager="*res://addons/sound_manager/module/SoundManager.tscn"
 
+[display]
+
+window/size/width=1920
+window/size/height=1080
+window/stretch/mode="viewport"
+window/stretch/aspect="keep"
+
 [editor_plugins]
 
 enabled=PoolStringArray( "Todo_Manager", "sound_manager" )

@@ -14,7 +14,7 @@ const FACING_TO_OFFSET = [
 ]
 
 enum FACING_VALUES {DOWN, LEFT, UP, RIGHT, INVALID}
-const walkSpeed = 3
+const walkSpeed = 4
 const runSpeed = walkSpeed*2
 const quickTurnMargin = 0.25/3
 
@@ -36,7 +36,12 @@ var moveVel = 0
 #current "floor" in the map (also Y position in tile space
 var yLayer = 0
 
+var slopeSpeedMultiplier = 1
+
 var moveBlocked = false
+
+onready var animPlayer = get_node("Sprite3D/AnimationPlayer")
+onready var floorCast = get_node("floorCast")
 
 #counter til reached next tile (normalized)
 var moveTimer = 0
@@ -47,7 +52,7 @@ var quickTurnTimer = 0
 func _ready():
 	parent = get_parent_spatial()
 	world = parent.get_node("GridMap")
-	get_node("Sprite3D/AnimationPlayer").current_animation = str("Idle", dirFacing)
+	animPlayer.current_animation = str("Idle", dirFacing)
 	pass
 
 #check for valid tiles to move to
@@ -55,9 +60,9 @@ func _ready():
 func _process(delta):
 	if moveTimer > 0 and quickTurnTimer <= 0:
 		if Input.is_action_pressed("overworld_run"):
-			get_node("Sprite3D/AnimationPlayer").current_animation = str("Run", dirFacing)
+			animPlayer.current_animation = str("Run", dirFacing)
 		else:
-			get_node("Sprite3D/AnimationPlayer").current_animation = str("Walk", dirFacing)
+			animPlayer.current_animation = str("Walk", dirFacing)
 	else:
 		#we would check if the next move is valid here
 		if hasPlayerInvokedMove():
@@ -75,23 +80,26 @@ func _process(delta):
 				if not moveBlocked:
 					quickTurnTimer = quickTurnMargin
 					get_node("soundPlayer").play()
-					get_node("Sprite3D/AnimationPlayer").current_animation = str("Walk", dirFacing)
+					animPlayer.current_animation = str("Walk", dirFacing)
 					moveBlocked = true
 			
 			if hasPlayerJustInvokedMove():
 				if dirFacing != lastDirFacing:
 					quickTurnTimer = quickTurnMargin
-					get_node("Sprite3D/AnimationPlayer").current_animation = str("Walk", dirFacing)
+					animPlayer.current_animation = str("Walk", dirFacing)
 			if quickTurnTimer <= 0:
 				if not isFacingTileSolid():
 					posTileLast = posTile
 					posTile += FACING_TO_OFFSET[dirFacing]
 					var celId = world.get_cell_item(posTile.x, posTile.y, posTile.z)
+					slopeSpeedMultiplier = 1
 					if world.mesh_library.collisionType[celId] == gridHelper.TYPES.SLOPE:
 						posTile.y += 1
+						slopeSpeedMultiplier = 0.7
 					celId = world.get_cell_item(posTileLast.x, posTileLast.y - 1, posTileLast.z)
 					if gridHelper.ORTHO_TO_INDEX[dirFacing] == world.get_cell_item_orientation(posTileLast.x, posTileLast.y-1, posTileLast.z) and world.mesh_library.collisionType[celId] == gridHelper.TYPES.SLOPE:
 						posTile.y -= 1
+						slopeSpeedMultiplier = 0.85
 					moveTimer = 1
 			
 		else:
@@ -103,22 +111,22 @@ func _process(delta):
 		if moveTimer <= 0 and quickTurnTimer <= 0:
 			moveTimer = 0
 			moveVel = 0
-			get_node("Sprite3D/AnimationPlayer").current_animation = str("Idle", dirFacing)
+			animPlayer.current_animation = str("Idle", dirFacing)
 		
-	moveTimer -= delta * moveVel/1
+	moveTimer -= delta * moveVel/1 * slopeSpeedMultiplier
 	quickTurnTimer -= delta
 	lastDirFacing = dirFacing
 	
 	var cam = get_node("CameraTest")
 	if Input.is_action_pressed("ui_up"):
-		cam.translation.x -= 0.5 * delta * 2
-		cam.translation.y -= 0.35 * delta * 2
+		cam.translation.x -= 2 * delta * 2
+		cam.translation.y -= 2 * delta * 2
 	if Input.is_action_pressed("ui_down"):
-		cam.translation.x += 0.5 * delta * 2
-		cam.translation.y += 0.35 * delta * 2
+		cam.translation.x += 2 * delta * 2
+		cam.translation.y += 2 * delta * 2
 	if Input.is_action_pressed("ui_accept"):
-		cam.translation.x = 2
-		cam.translation.y = 1.5
+		cam.translation.x = 20
+		cam.translation.y = 22
 	pass
 
 func _physics_process(delta):
@@ -126,23 +134,31 @@ func _physics_process(delta):
 	var celId = world.get_cell_item(checkTile.x, checkTile.y, checkTile.z)
 	checkTile = posTileLast + Vector3(0,-1,0)
 	var lastCelId = world.get_cell_item(checkTile.x, checkTile.y, checkTile.z)
-	#FIXME: USE A RAYCAST TO "SNAP" TO FLOOR POSITION INSTEAD OF LERPING TO ALLOW FOR ACCURATE COLLISION
+	#RESOLVED-FIXME: USE A RAYCAST TO "SNAP" TO FLOOR POSITION INSTEAD OF LERPING TO ALLOW FOR ACCURATE COLLISION
+	floorCast.force_raycast_update()
+	translation.y = floorCast.get_collision_point().y
 	if moveTimer > 0 and quickTurnTimer <= 0:
-		translation = (posTile + (Vector3.DOWN*world.mesh_library.tileHeight[celId])).linear_interpolate(posTileLast + (Vector3.DOWN*world.mesh_library.tileHeight[lastCelId]), moveTimer)*world.cell_size
+		#translation = (posTile + (Vector3.DOWN*world.mesh_library.tileHeight[celId])).linear_interpolate(posTileLast + (Vector3.DOWN*world.mesh_library.tileHeight[lastCelId]), moveTimer)*world.cell_size
+		translation.x = lerp(posTile.x, posTileLast.x, moveTimer) * world.cell_size.x
+		translation.z = lerp(posTile.z, posTileLast.z, moveTimer) * world.cell_size.z
 		if Input.is_action_pressed("overworld_run"):
 			moveVel = runSpeed
 		else:
 			moveVel = walkSpeed
 	else:
-		translation = (posTile + (Vector3.DOWN*world.mesh_library.tileHeight[celId]))*world.cell_size
+		#translation = (posTile + (Vector3.DOWN*world.mesh_library.tileHeight[celId]))*world.cell_size
+		translation.x = posTile.x*world.cell_size.x
+		translation.z = posTile.z*world.cell_size.z
 	pass
 
 func isFacingTileSolid():
 	#check for walls
+	var tileDefs = world.mesh_library
+	
 	var standingCel = world.get_cell_item(posTile.x, posTile.y - 1, posTile.z)
 	var checkTile = posTile + FACING_TO_OFFSET[dirFacing]
 	var celId = world.get_cell_item(checkTile.x, checkTile.y, checkTile.z)
-	match world.mesh_library.collisionType[celId]:
+	match tileDefs.collisionType[celId]:
 		gridHelper.TYPES.INVALID:
 			pass
 		gridHelper.TYPES.SOLID:
@@ -154,15 +170,20 @@ func isFacingTileSolid():
 				return true
 	
 	celId = world.get_cell_item(checkTile.x, checkTile.y - 1, checkTile.z)
-	if world.mesh_library.collisionType[standingCel] == gridHelper.TYPES.SLOPE:
-		if gridHelper.ORTHO_TO_INDEX[dirFacing] != world.get_cell_item_orientation(posTile.x, posTile.y - 1, posTile.z) and gridHelper.ORTHO_TO_INDEX[FACING_INVERSE[dirFacing]] != world.get_cell_item_orientation(posTile.x, posTile.y - 1, posTile.z):
-			return true
-	if world.mesh_library.collisionType[celId] == gridHelper.TYPES.SLOPE and gridHelper.ORTHO_TO_INDEX[dirFacing] != world.get_cell_item_orientation(checkTile.x, checkTile.y - 1, checkTile.z):
-		return true
+	var celOri = world.get_cell_item_orientation(checkTile.x, checkTile.y - 1, checkTile.z)
 	var testOri = world.get_cell_item_orientation(posTile.x, posTile.y-1, posTile.z)
+	if tileDefs.collisionType[standingCel] == gridHelper.TYPES.SLOPE:
+		if tileDefs.collisionType[celId] == gridHelper.TYPES.SLOPE and testOri == celOri:
+			return false
+		if gridHelper.ORTHO_TO_INDEX[dirFacing] != testOri and gridHelper.ORTHO_TO_INDEX[FACING_INVERSE[dirFacing]] != testOri:
+			return true
+	if tileDefs.collisionType[celId] == gridHelper.TYPES.SLOPE and gridHelper.ORTHO_TO_INDEX[dirFacing] != celOri:
+		if gridHelper.INDEX_IS_SLOPE[celOri]:
+			return true
+		return false
 	var celIdForSlope = world.get_cell_item(checkTile.x, checkTile.y - 2, checkTile.z)
 	if celId == -1:
-		if world.mesh_library.collisionType[standingCel] == gridHelper.TYPES.SLOPE and gridHelper.ORTHO_TO_INDEX[dirFacing] == testOri and celIdForSlope != -1:
+		if tileDefs.collisionType[standingCel] == gridHelper.TYPES.SLOPE and gridHelper.ORTHO_TO_INDEX[dirFacing] == testOri and celIdForSlope != -1:
 			return false
 		else:
 			return true

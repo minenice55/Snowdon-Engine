@@ -70,6 +70,33 @@ const INDEX_TO_FACING = [
 	FACING_VALUES.INVALID,
 ]
 
+const INDEX_IS_SLOPE = [
+	true,
+	false,
+	false,
+	false,
+	false,
+	false,
+	false,
+	false,
+	false,
+	false,
+	true,
+	false,
+	false,
+	false,
+	false,
+	false,
+	true,
+	false,
+	false,
+	false,
+	false,
+	false,
+	true,
+	false,
+]
+
 const ORTHO_TO_INDEX = [
 	0,
 	22,
